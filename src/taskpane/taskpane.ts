@@ -87,7 +87,7 @@ export async function generateAndInsertText(): Promise<void> {
     const aiResponse = await callOpenAI(apiKey, prompt);
     
     // Insert the response into Word document
-    await insertTextIntoDocument(aiResponse);
+    await insertTextAtCursor(aiResponse);
     
     showStatus("Text generated and inserted successfully!", "success");
     
@@ -135,18 +135,10 @@ async function callOpenAI(apiKey: string, prompt: string): Promise<string> {
 /**
  * Insert generated text into the Word document
  */
-async function insertTextIntoDocument(text: string): Promise<void> {
+async function insertTextAtCursor(text: string): Promise<void> {
   return Word.run(async (context) => {
-    // Insert a paragraph at the end of the document
-    const paragraph = context.document.body.insertParagraph(text, Word.InsertLocation.end);
-    
-    // Optional: Style the inserted text
-    paragraph.font.color = "#000000";
-    paragraph.font.size = 11;
-    
-    // Add some spacing
-    const spacingParagraph = context.document.body.insertParagraph("", Word.InsertLocation.end);
-    spacingParagraph.font.size = 6;
+    // Text an der aktuellen Cursor-Position einfügen
+    context.document.getSelection().insertText(text, Word.InsertLocation.replace);
     
     await context.sync();
   });

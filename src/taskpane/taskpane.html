@@ -1,0 +1,73 @@
+<!-- Copyright (c) Microsoft Corporation. All rights reserved. Licensed under the MIT License. -->
+<!-- This file shows how to design a first-run page that provides a welcome screen to the user about the features of the add-in. -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>OpenAI Word Assistant</title>
+
+    <!-- Office JavaScript API -->
+    <script type="text/javascript" src="https://appsforoffice.microsoft.com/lib/1/hosted/office.js"></script>
+
+    <!-- For more information on Fluent UI, visit https://developer.microsoft.com/fluentui#/. -->
+    <link rel="stylesheet" href="https://res-1.cdn.office.net/files/fabric-cdn-prod_20230815.002/office-ui-fabric-core/11.1.0/css/fabric.min.css"/>
+
+    <!-- Template styles -->
+    <link href="taskpane.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="ms-font-m ms-welcome ms-Fabric">
+    <header class="ms-welcome__header ms-bgColor-neutralLighter">
+        <img width="90" height="90" src="../../assets/logo-filled.png" alt="Olymp" title="Olymp" />
+        <h1 class="ms-font-su">Olymp</h1>
+    </header>
+    <section id="sideload-msg" class="ms-welcome__main">
+        <h2 class="ms-font-xl">Please <a target="_blank" href="https://learn.microsoft.com/office/dev/add-ins/testing/test-debug-office-add-ins#sideload-an-office-add-in-for-testing">sideload</a> your add-in to see app body.</h2>
+    </section>
+    <main id="app-body" class="ms-welcome__main" style="display: none;">
+        <h2 class="ms-font-xl">AI-Powered Text Generation</h2>
+        
+        <!-- API Key Input -->
+        <div class="ms-TextField" style="margin-bottom: 15px;">
+            <label class="ms-Label">OpenAI API Key:</label>
+            <input type="password" id="api-key" class="ms-TextField-field" placeholder="Enter your OpenAI API key">
+            <small class="ms-font-xs">Your API key is stored locally and not sent anywhere except OpenAI</small>
+        </div>
+
+        <!-- Prompt Input -->
+        <div class="ms-TextField" style="margin-bottom: 15px;">
+            <label class="ms-Label">Enter your prompt:</label>
+            <textarea id="prompt-input" class="ms-TextField-field" rows="4" placeholder="Ask AI to write something for your document..."></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="margin-bottom: 15px;">
+            <div role="button" id="generate-text" class="ms-welcome__action ms-Button ms-Button--hero ms-font-m" style="margin-right: 10px;">
+                <span class="ms-Button-label">Generate & Insert Text</span>
+            </div>
+            <div role="button" id="save-api-key" class="ms-Button ms-Button--primary ms-font-m">
+                <span class="ms-Button-label">Save API Key</span>
+            </div>
+        </div>
+
+        <!-- Status Display -->
+        <div id="status" class="ms-font-s" style="margin-top: 15px; padding: 10px; border-radius: 4px; display: none;"></div>
+
+        <!-- Usage Examples -->
+        <div style="margin-top: 20px;">
+            <h3 class="ms-font-l">Example Prompts:</h3>
+            <ul class="ms-List">
+                <li class="ms-ListItem ms-font-s">Write a professional email introduction</li>
+                <li class="ms-ListItem ms-font-s">Create a summary of key project milestones</li>
+                <li class="ms-ListItem ms-font-s">Generate a list of meeting agenda items</li>
+                <li class="ms-ListItem ms-font-s">Write a product description for our new service</li>
+            </ul>
+        </div>
+    </main>
+</body>
+
+</html>

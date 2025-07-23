@@ -5,12 +5,12 @@
   <ProviderName>Olymp AG</ProviderName>
   <DefaultLocale>en-US</DefaultLocale>
   <DisplayName DefaultValue="Olymp Word Integration"/>
-  <Description DefaultValue="A template to get started."/>
+  <Description DefaultValue="Olymp Integration for Word."/>
   <IconUrl DefaultValue="https://localhost:3000/assets/icon-32.png"/>
-  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/icon-64.png"/>
-  <SupportUrl DefaultValue="https://www.contoso.com/help"/>
+  <HighResolutionIconUrl DefaultValue="https://localhost:3000/assets/images/icon-64.png"/>
+  <SupportUrl DefaultValue="https://www.olymp.finance/contact"/>
   <AppDomains>
-    <AppDomain>https://www.contoso.com</AppDomain>
+    <AppDomain>https://www.olymp.finance</AppDomain>
   </AppDomains>
   <Hosts>
     <Host Name="Document"/>
@@ -62,9 +62,9 @@
     </Hosts>
     <Resources>
       <bt:Images>
-        <bt:Image id="Icon.16x16" DefaultValue="https://localhost:3000/assets/icon-16.png"/>
-        <bt:Image id="Icon.32x32" DefaultValue="https://localhost:3000/assets/icon-32.png"/>
-        <bt:Image id="Icon.80x80" DefaultValue="https://localhost:3000/assets/icon-80.png"/>
+        <bt:Image id="Icon.16x16" DefaultValue="/assets/icon-16.png"/>
+        <bt:Image id="Icon.32x32" DefaultValue="/assets/icon-32.png"/>
+        <bt:Image id="Icon.80x80" DefaultValue="/assets/icon-80.png"/>
       </bt:Images>
       <bt:Urls>
         <bt:Url id="GetStarted.LearnMoreUrl" DefaultValue="https://go.microsoft.com/fwlink/?LinkId=276812"/>
@@ -72,13 +72,13 @@
         <bt:Url id="Taskpane.Url" DefaultValue="https://localhost:3000/taskpane.html"/>
       </bt:Urls>
       <bt:ShortStrings>
-        <bt:String id="GetStarted.Title" DefaultValue="Get started with your sample add-in!"/>
+        <bt:String id="GetStarted.Title" DefaultValue="Get started with Olymp!"/>
         <bt:String id="CommandsGroup.Label" DefaultValue="Commands Group"/>
         <bt:String id="TaskpaneButton.Label" DefaultValue="Olymp"/>
       </bt:ShortStrings>
       <bt:LongStrings>
-        <bt:String id="GetStarted.Description" DefaultValue="Welcome to Olymp. Go to the HOME tab and click the 'Show Task Pane' button to get started."/>
-        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to Show a Taskpane"/>
+        <bt:String id="GetStarted.Description" DefaultValue="Welcome to Olymp. Go to the HOME tab and click the 'Olymp' button to get started."/>
+        <bt:String id="TaskpaneButton.Tooltip" DefaultValue="Click to show the integration"/>
       </bt:LongStrings>
     </Resources>
   </VersionOverrides>

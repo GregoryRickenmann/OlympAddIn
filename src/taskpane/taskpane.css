@@ -10,7 +10,7 @@ html, body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    background: linear-gradient(135deg, #f8f9fa 100%, #e9ecef 100%);
     color: #333;
 }
 
@@ -102,6 +102,7 @@ ul {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    margin-bottom: 1.25rem;
 }
 
 .input-label {

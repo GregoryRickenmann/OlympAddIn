@@ -16,6 +16,7 @@ Office.onReady((info) => {
     
     // Set up event handlers
     document.getElementById("generate-text").onclick = generateAndInsertText;
+    document.getElementById("summarize-text").onclick = summarizeSelectedText;
     document.getElementById("save-api-key").onclick = saveApiKey;
     
     // Load saved API key
@@ -183,5 +184,46 @@ function showStatus(message: string, type: 'success' | 'error' | 'loading'): voi
     setTimeout(() => {
       statusElement.style.display = "none";
     }, 3000);
+  }
+}
+
+// Summarize function
+async function summarizeSelectedText(): Promise<void> {
+  const apiKeyInput = document.getElementById("api-key") as HTMLInputElement;
+  const apiKey = apiKeyInput.value.trim();
+
+  if (!apiKey) {
+    showStatus("Please enter your OpenAI API key", "error");
+    return;
+  }
+
+  showStatus("Summarizing selected text...", "loading");
+
+  try {
+    await Word.run(async (context) => {
+      const selection = context.document.getSelection();
+      selection.load("text");
+      await context.sync();
+
+      const selectedText = selection.text.trim();
+
+      if (!selectedText) {
+        showStatus("No text selected. Please select text to summarize.", "error");
+        return;
+      }
+
+      const prompt = `Please summarize the following text in a concise paragraph:\n\n${selectedText}`;
+
+      const summary = await callOpenAI(apiKey, prompt);
+
+      // Replace the selected text with the summary
+      selection.insertText(summary, Word.InsertLocation.replace);
+      await context.sync();
+
+      showStatus("Summary inserted successfully!", "success");
+    });
+  } catch (error) {
+    console.error("Summarization error:", error);
+    showStatus(`Error: ${error.message}`, "error");
   }
 }

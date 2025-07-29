@@ -37,18 +37,10 @@
                 <h2 class="ms-font-xl assistant-title">Meet Apollo</h2>
                 <p class="ms-font-m subtitle">Transform your work with intelligent AI assistance</p>
             </div>
-            
-            <!-- API Key Section -->
-            <div class="input-section">
-                <div class="input-group">
-                    <label class="ms-Label input-label">OpenAI API Key</label>
-                    <input type="password" id="api-key" class="ms-TextField-field modern-input" placeholder="sk-...">
-                    <div class="input-helper">Your API key is stored securely in your browser</div>
-                </div>
-            </div>
+
 
             <!-- Authentication Section -->
-            <div class="input-section">
+            <div id="auth-section" class="input-section auth-section">
                 <div class="input-group">
                     <label class="ms-Label input-label">Email</label>
                     <input type="email" id="auth-email" class="ms-TextField-field modern-input" placeholder="you@example.com">
@@ -59,8 +51,32 @@
                 </div>
                 <div class="button-section">
                     <button id="login-button" class="modern-button primary-button">
-                        <span class="button-icon">🔐</span>
+                        <!--<span class="button-icon">🔐</span>-->
                         <span class="button-text">Log In</span>
+                    </button>
+                </div>
+            </div>
+
+            
+            <!-- API Key Section -->
+            <div class="input-section">
+                <div class="input-group">
+                    <label class="ms-Label input-label">API Key</label>
+                    <input type="password" id="api-key" class="ms-TextField-field modern-input" placeholder="sk-...">
+                    <div class="input-helper">Your API key is stored securely in your browser.</div>
+                </div>
+            </div>
+
+            <!-- User Info Section (hidden by default) -->
+            <div id="user-info-section" class="input-section user-info-section" style="display: none;">
+                <div class="user-welcome">
+                    <div class="welcome-icon">👋</div>
+                    <div class="welcome-text">
+                        <span class="welcome-message">Welcome back!</span>
+                        <span id="user-email-display" class="user-email"></span>
+                    </div>
+                    <button id="logout-button" class="logout-button">
+                        <span class="button-icon">🚪</span>
                     </button>
                 </div>
             </div>
@@ -76,13 +92,20 @@
             <!-- Action Buttons -->
             <div class="button-section">
                 <button id="generate-text" class="modern-button primary-button">
-                    <span class="button-icon">✨</span>
+                    <!--<span class="button-icon">✨</span>-->
                     <span class="button-text">Generate & Insert Text</span>
                 </button>
+                <button id="summarize-text" class="modern-button primary-button">
+                    <!--<span class="button-icon">💾</span>-->
+                    <span class="button-text">Summarize Text</span>
+                </button>
                 <button id="save-api-key" class="modern-button secondary-button">
-                    <span class="button-icon">💾</span>
+                    <!--<span class="button-icon">💾</span>-->
                     <span class="button-text">Save API Key</span>
                 </button>
+                
+                
+
             </div>
 
             <!-- Status Display -->
@@ -92,19 +115,19 @@
             <div class="examples-section">
                 <h3 class="ms-font-l examples-title">Try these prompts:</h3>
                 <div class="examples-grid">
-                    <div class="example-card">
+                    <div class="example-card" data-prompt="Write a summary of my clients educational history">
                         <div class="example-icon">📧</div>
                         <div class="example-text">Write a summary of my clients educational history</div>
                     </div>
-                    <div class="example-card">
+                    <div class="example-card" data-prompt="Create a summary of key relationship milestones">
                         <div class="example-icon">📊</div>
                         <div class="example-text">Create a summary of key relationship milestones</div>
                     </div>
-                    <div class="example-card">
+                    <div class="example-card" data-prompt="Generate a list of meeting agenda items">
                         <div class="example-icon">📋</div>
                         <div class="example-text">Generate a list of meeting agenda items</div>
                     </div>
-                    <div class="example-card">
+                    <div class="example-card" data-prompt="Describe my clients financial situation">
                         <div class="example-icon">🚀</div>
                         <div class="example-text">Describe my clients financial situation</div>
                     </div>

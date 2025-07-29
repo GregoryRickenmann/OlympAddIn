@@ -96,6 +96,90 @@ ul {
 /* Input Sections */
 .input-section {
     margin-bottom: 32px;
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible;
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.input-section.hiding {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.98);
+    max-height: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    overflow: hidden;
+}
+
+/* Authentication Section Specific Styles */
+.auth-section {
+    border: 2px solid transparent;
+    border-radius: 16px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.auth-section.authenticated {
+    border-color: #28a745;
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+}
+
+/* User Info Section */
+.user-info-section {
+    background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+    border: 2px solid #28a745;
+    border-radius: 16px;
+    padding: 20px;
+    animation: slideIn 0.5s ease;
+}
+
+.user-welcome {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.welcome-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.welcome-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.welcome-message {
+    font-weight: 600;
+    color: #155724;
+    font-size: 16px;
+}
+
+.user-email {
+    font-size: 14px;
+    color: #0d5345;
+    opacity: 0.8;
+}
+
+.logout-button {
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 16px;
+    color: #155724;
+}
+
+.logout-button:hover {
+    background: rgba(21, 87, 36, 0.1);
+    transform: scale(1.1);
 }
 
 .input-group {
@@ -147,6 +231,38 @@ ul {
     margin-top: 4px;
 }
 
+/* Login Success Indicator */
+.login-success-indicator {
+    position: relative;
+}
+
+.login-success-indicator::after {
+    content: "✓";
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #28a745;
+    font-weight: bold;
+    font-size: 18px;
+    opacity: 0;
+    animation: checkmark 0.6s ease forwards;
+}
+
+@keyframes checkmark {
+    0% {
+        opacity: 0;
+        transform: translateY(-50%) scale(0) rotate(-180deg);
+    }
+    50% {
+        transform: translateY(-50%) scale(1.3) rotate(0deg);
+    }
+    100% {
+        opacity: 1;
+        transform: translateY(-50%) scale(1) rotate(0deg);
+    }
+}
+
 /* Button Section */
 .button-section {
     display: flex;
@@ -170,6 +286,8 @@ ul {
     font-family: inherit;
     text-decoration: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    position: relative;
+    overflow: hidden;
 }
 
 .primary-button {
@@ -206,6 +324,32 @@ ul {
 
 .button-text {
     line-height: 1;
+}
+
+/* Loading state for buttons */
+.modern-button.loading {
+    color: transparent;
+    pointer-events: none;
+}
+
+.modern-button.loading::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    color: white;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
 }
 
 /* Status Messages */
@@ -328,13 +472,18 @@ ul {
     .assistant-title {
         font-size: 20px;
     }
+
+    .auth-section, .user-info-section {
+        padding: 16px;
+    }
 }
 
 /* Focus and Accessibility */
 .modern-button:focus,
 .modern-input:focus,
 .modern-textarea:focus,
-.example-card:focus {
+.example-card:focus,
+.logout-button:focus {
     outline: 2px solid #667eea;
     outline-offset: 2px;
 }
@@ -342,4 +491,22 @@ ul {
 /* Smooth scrolling */
 html {
     scroll-behavior: smooth;
+}
+
+/* Fade out animation for hiding elements */
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        max-height: 500px;
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px) scale(0.95);
+        max-height: 0;
+    }
+}
+
+.fade-out {
+    animation: fadeOut 0.5s ease forwards;
 }

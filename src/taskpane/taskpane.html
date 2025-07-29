@@ -84,6 +84,7 @@
             <!-- Prompt Section -->
             <div class="input-section">
                 <div class="input-group">
+                    <h2 class="ms-font-xl assistant-title">Access Data from Etops</h2>
                     <label class="ms-Label input-label">What would you like me to write?</label>
                     <textarea id="prompt-input" class="ms-TextField-field modern-textarea" rows="4" placeholder="Describe what you need, and I'll generate it for you..."></textarea>
                 </div>
@@ -103,11 +104,31 @@
                     <!--<span class="button-icon">💾</span>-->
                     <span class="button-text">Save API Key</span>
                 </button>
-                
-                
 
-            </div>
-
+            <!-- Translate section-->
+            <div class="translate-section">
+                <h3>🌐 Translate Selected Text</h3>
+              
+                <div class="translate-form-group">
+                  <label for="target-language">Target Language</label>
+                  <select id="target-language">
+                    <option value="French">French</option>
+                    <option value="German">German</option>
+                    <option value="Spanish">Spanish</option>
+                    <option value="Italian">Italian</option>
+                    <option value="Chinese">Chinese</option>
+                    <option value="Dutch">Dutch</option>
+                  </select>
+                </div>
+              
+                <div class="translate-form-group">
+                  <label for="tone">Tone (optional)</label>
+                  <input type="text" id="tone" placeholder="e.g. formal, friendly, business" />
+                </div>
+              
+                <button id="translate-text" class="translate-button">Translate</button>
+              </div>
+            
             <!-- Status Display -->
             <div id="status" class="status-message" style="display: none;"></div>
 

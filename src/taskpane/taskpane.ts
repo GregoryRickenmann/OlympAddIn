@@ -18,6 +18,8 @@ Office.onReady((info) => {
     document.getElementById("generate-text").onclick = generateAndInsertText;
     document.getElementById("summarize-text").onclick = summarizeSelectedText;
     document.getElementById("save-api-key").onclick = saveApiKey;
+    document.getElementById("translate-text").onclick = translateSelectedText;
+
     
     // Load saved API key
     loadSavedApiKey();
@@ -224,6 +226,52 @@ async function summarizeSelectedText(): Promise<void> {
     });
   } catch (error) {
     console.error("Summarization error:", error);
+    showStatus(`Error: ${error.message}`, "error");
+  }
+}
+
+async function translateSelectedText(): Promise<void> {
+  const apiKeyInput = document.getElementById("api-key") as HTMLInputElement;
+  const languageSelect = document.getElementById("target-language") as HTMLSelectElement;
+  const toneInput = document.getElementById("tone") as HTMLInputElement;
+
+  const apiKey = apiKeyInput.value.trim();
+  const targetLanguage = languageSelect.value;
+  const tone = toneInput.value.trim();
+
+  if (!apiKey) {
+    showStatus("Please enter your OpenAI API key", "error");
+    return;
+  }
+
+  showStatus("Translating selected text...", "loading");
+
+  try {
+    await Word.run(async (context) => {
+      const selection = context.document.getSelection();
+      selection.load("text");
+      await context.sync();
+
+      const selectedText = selection.text.trim();
+      if (!selectedText) {
+        showStatus("No text selected. Please select text to translate.", "error");
+        return;
+      }
+
+      let prompt = `Translate the following text into ${targetLanguage}`;
+      if (tone) prompt += ` with a ${tone} tone`;
+      prompt += `:\n\n${selectedText}`;
+
+      const translation = await callOpenAI(apiKey, prompt);
+
+      // Replace selected text with the translation
+      selection.insertText(translation, Word.InsertLocation.replace);
+      await context.sync();
+
+      showStatus("Translation inserted successfully!", "success");
+    });
+  } catch (error) {
+    console.error("Translation error:", error);
     showStatus(`Error: ${error.message}`, "error");
   }
 }

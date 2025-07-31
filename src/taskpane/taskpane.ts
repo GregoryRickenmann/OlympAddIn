@@ -214,7 +214,7 @@ async function summarizeSelectedText(): Promise<void> {
         return;
       }
 
-      const prompt = `Please summarize the following text in a concise paragraph:\n\n${selectedText}`;
+      const prompt = `Please summarize the following text in a concise paragraph, while keeping the original language:\n\n${selectedText}`;
 
       const summary = await callOpenAI(apiKey, prompt);
 

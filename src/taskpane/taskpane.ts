@@ -6,8 +6,12 @@
 /* global document, Office, Word */
 
 // OpenAI API Configuration
-const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
-const LOCAL_STORAGE_API_KEY = 'openai_api_key';
+//const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
+//const LOCAL_STORAGE_API_KEY = 'openai_api_key';
+
+//Apollo API config
+const APOLLO_API_URL = 'https://olympai-a782bc8ad30b.herokuapp.com/api';
+const LOCAL_STORAGE_API_KEY = 'apollo_api_key';
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Word) {
@@ -33,7 +37,7 @@ function loadSavedApiKey(): void {
   try {
     const savedApiKey = localStorage.getItem(LOCAL_STORAGE_API_KEY);
     if (savedApiKey) {
-      const apiKeyInput = document.getElementById("api-key") as HTMLInputElement;
+      const apiKeyInput = document.getElementById("api-key") as HTMLInputElement; // so that .value etc is possible
       apiKeyInput.value = savedApiKey;
       showStatus("API key loaded from storage", "success");
     }
@@ -87,7 +91,7 @@ export async function generateAndInsertText(): Promise<void> {
   
   try {
     // Call OpenAI API
-    const aiResponse = await callOpenAI(apiKey, prompt);
+    const aiResponse = await callApollo(apiKey, prompt); //pauses async function to wait for api call function
     
     // Insert the response into Word document
     await insertTextAtCursor(aiResponse);
@@ -106,34 +110,73 @@ export async function generateAndInsertText(): Promise<void> {
 /**
  * Call OpenAI API to generate text
  */
-async function callOpenAI(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch(OPENAI_API_URL, {
+// async function callOpenAI(apiKey: string, prompt: string): Promise<string> {
+//   const response = await fetch(OPENAI_API_URL, {
+//     method: 'POST',
+//     headers: {
+//       'Content-Type': 'application/json',
+//       'X-API-KEY': apiKey
+//       //'Authorization': `Bearer ${apiKey}`
+//     },
+//     body: JSON.stringify({
+//       model: 'gpt-3.5-turbo',
+//       messages: [
+//         {
+//           role: 'user',
+//           content: prompt
+//         }
+//       ],
+//       max_tokens: 1000,
+//       temperature: 0.7
+//     })
+//   });
+  
+//   if (!response.ok) {
+//     const errorData = await response.json();
+//     throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+//   }
+  
+//   const data = await response.json();
+//   return data.choices[0].message.content.trim();
+// }
+
+// Call Apollo API
+async function callApollo(apiKey: string, prompt: string): Promise<string> {
+  const response = await fetch(APOLLO_API_URL, {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
+      'X-API-KEY': apiKey,
+      'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: 'gpt-3.5-turbo',
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.7
+      prompt: prompt
     })
   });
   
   if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || `HTTP ${response.status}: ${response.statusText}`);
+    let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+    
+    try {
+      const errorData = await response.json();
+      // Adapt this based on your API's error response format
+      errorMessage = errorData.error || errorData.message || errorMessage;
+    } catch (parseError) {
+      // If error response isn't JSON, use the default message
+    }
+    
+    throw new Error(errorMessage);
   }
   
   const data = await response.json();
-  return data.choices[0].message.content.trim();
+  
+  // Extract only the text field from the response, ignoring SQL
+  if (data.text) {
+    return data.text.trim();
+  } else {
+    throw new Error("No text field found in API response");
+  }
 }
+
 
 /**
  * Insert generated text into the Word document
@@ -216,7 +259,7 @@ async function summarizeSelectedText(): Promise<void> {
 
       const prompt = `Please summarize the following text in a concise paragraph, while keeping the original language:\n\n${selectedText}`;
 
-      const summary = await callOpenAI(apiKey, prompt);
+      const summary = await callApollo(apiKey, prompt);
 
       // Replace the selected text with the summary
       selection.insertText(summary, Word.InsertLocation.replace);
@@ -229,6 +272,8 @@ async function summarizeSelectedText(): Promise<void> {
     showStatus(`Error: ${error.message}`, "error");
   }
 }
+
+// translate function
 
 async function translateSelectedText(): Promise<void> {
   const apiKeyInput = document.getElementById("api-key") as HTMLInputElement;
@@ -262,7 +307,7 @@ async function translateSelectedText(): Promise<void> {
       if (tone) prompt += ` with a ${tone} tone`;
       prompt += `:\n\n${selectedText}`;
 
-      const translation = await callOpenAI(apiKey, prompt);
+      const translation = await callApollo(apiKey, prompt);
 
       // Replace selected text with the translation
       selection.insertText(translation, Word.InsertLocation.replace);

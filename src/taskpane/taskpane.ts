@@ -218,12 +218,16 @@ export async function generateAndInsertText(): Promise<void> {
   }
 
   showStatus("Generating text with AI...", "loading");
+  hideSources();
 
   try {
     const aiResponse = await callApolloPrompt(prompt);
 
     // Insert the response into Word document
-    await insertTextAtCursor(aiResponse);
+    await insertTextAtCursor(aiResponse.text);
+
+    // Display sources
+    displaySources(aiResponse.sources);
 
     showStatus("Text generated and inserted successfully!", "success");
 
@@ -275,7 +279,7 @@ export async function generateAndInsertText(): Promise<void> {
 // }
 
 // Call Apollo API for prompts
-async function callApolloPrompt(prompt: string): Promise<string> {
+async function callApolloPrompt(prompt: string): Promise<{text: string, sources: any}> {
   if (!authToken) {
     throw new Error("Authentication required");
   }
@@ -318,12 +322,16 @@ async function callApolloPrompt(prompt: string): Promise<string> {
 
   const data = await response.json();
 
-  // Extract only the text field from the response
-  if (data.text) {
-    return data.text.trim();
-  } else {
+  // Validate response format
+  if (!data.text) {
     throw new Error("No text field found in API response");
   }
+
+  // Return the complete response with both text and sources
+  return {
+    text: data.text.trim(),
+    sources: data.sources || {}
+  };
 }
 
 /**
@@ -336,6 +344,172 @@ async function insertTextAtCursor(text: string): Promise<void> {
 
     await context.sync();
   });
+}
+
+/**
+ * Display sources in the taskpane
+ */
+function displaySources(sources: any): void {
+  const sourcesSection = document.getElementById("sources-section");
+  const sourcesList = document.getElementById("sources-list");
+
+  if (!sources || Object.keys(sources).length === 0) {
+    sourcesSection.style.display = "none";
+    return;
+  }
+
+  // Clear existing content
+  sourcesList.innerHTML = "";
+
+  // Create list items for each source
+  for (const [key, value] of Object.entries(sources)) {
+    const sourceItem = document.createElement("div");
+    sourceItem.className = "source-item";
+
+    const sourceKey = document.createElement("div");
+    sourceKey.className = "source-key";
+    sourceKey.textContent = getSourceKeyDisplay(key);
+
+    const sourceContent = document.createElement("div");
+    sourceContent.className = "source-content";
+
+    // Handle different value types
+    if (Array.isArray(value)) {
+      sourceContent.appendChild(createArrayDisplay(value, key));
+    } else if (typeof value === "object" && value !== null) {
+      sourceContent.appendChild(createObjectDisplay(value));
+    } else {
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "source-value-simple";
+      valueSpan.textContent = String(value);
+      sourceContent.appendChild(valueSpan);
+    }
+
+    sourceItem.appendChild(sourceKey);
+    sourceItem.appendChild(sourceContent);
+    sourcesList.appendChild(sourceItem);
+  }
+
+  // Show the sources section
+  sourcesSection.style.display = "block";
+}
+
+/**
+ * Get display name for source key
+ */
+function getSourceKeyDisplay(key: string): string {
+  const keyMappings: Record<string, string> = {
+    'database': '🗄️ Database',
+    'web_search': '🔍 Web Search',
+    'api_connection': '🔗 API Connection',
+    'files': '📁 Files'
+  };
+  return keyMappings[key] || key;
+}
+
+/**
+ * Create display for array values
+ */
+function createArrayDisplay(array: any[], sourceType: string): HTMLElement {
+  const container = document.createElement("div");
+  container.className = "source-array";
+
+  array.forEach((item, index) => {
+    const itemElement = document.createElement("div");
+    itemElement.className = "source-array-item";
+
+    if (sourceType === "web_search" && typeof item === "object" && item.title && item.url) {
+      // Handle web search results
+      const link = document.createElement("a");
+      link.href = item.url;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.className = "source-link";
+      link.textContent = item.title;
+      
+      const urlSpan = document.createElement("span");
+      urlSpan.className = "source-url";
+      urlSpan.textContent = item.url;
+      
+      itemElement.appendChild(link);
+      itemElement.appendChild(urlSpan);
+    } else if (sourceType === "files") {
+      // Handle file lists
+      const fileIcon = getFileIcon(String(item));
+      const fileSpan = document.createElement("span");
+      fileSpan.className = "source-file";
+      fileSpan.textContent = `${fileIcon} ${item}`;
+      itemElement.appendChild(fileSpan);
+    } else {
+      // Handle other array items
+      const valueSpan = document.createElement("span");
+      valueSpan.className = "source-value-simple";
+      valueSpan.textContent = String(item);
+      itemElement.appendChild(valueSpan);
+    }
+
+    container.appendChild(itemElement);
+  });
+
+  return container;
+}
+
+/**
+ * Create display for object values
+ */
+function createObjectDisplay(obj: any): HTMLElement {
+  const container = document.createElement("div");
+  container.className = "source-object";
+
+  for (const [key, value] of Object.entries(obj)) {
+    const itemElement = document.createElement("div");
+    itemElement.className = "source-object-item";
+    
+    const keySpan = document.createElement("span");
+    keySpan.className = "source-object-key";
+    keySpan.textContent = key + ":";
+    
+    const valueSpan = document.createElement("span");
+    valueSpan.className = "source-object-value";
+    valueSpan.textContent = String(value);
+    
+    itemElement.appendChild(keySpan);
+    itemElement.appendChild(valueSpan);
+    container.appendChild(itemElement);
+  }
+
+  return container;
+}
+
+/**
+ * Get appropriate icon for file type
+ */
+function getFileIcon(filename: string): string {
+  const extension = filename.split('.').pop()?.toLowerCase() || '';
+  
+  const iconMappings: Record<string, string> = {
+    'pdf': '📄',
+    'doc': '📝',
+    'docx': '📝',
+    'xls': '📊',
+    'xlsx': '📊',
+    'ppt': '📽️',
+    'pptx': '📽️',
+    'txt': '📄',
+    'csv': '📊',
+    'json': '🔧',
+    'xml': '🔧'
+  };
+  
+  return iconMappings[extension] || '📄';
+}
+
+/**
+ * Hide sources section
+ */
+function hideSources(): void {
+  const sourcesSection = document.getElementById("sources-section");
+  sourcesSection.style.display = "none";
 }
 
 /**
@@ -388,6 +562,7 @@ async function summarizeSelectedText(): Promise<void> {
   }
 
   showStatus("Summarizing selected text...", "loading");
+  hideSources();
 
   try {
     await Word.run(async (context) => {
@@ -407,8 +582,11 @@ async function summarizeSelectedText(): Promise<void> {
       const summary = await callApolloPrompt(prompt);
 
       // Replace the selected text with the summary
-      selection.insertText(summary, Word.InsertLocation.replace);
+      selection.insertText(summary.text, Word.InsertLocation.replace);
       await context.sync();
+
+      // Display sources
+      displaySources(summary.sources);
 
       showStatus("Summary inserted successfully!", "success");
     });
@@ -438,6 +616,7 @@ async function translateSelectedText(): Promise<void> {
   const tone = toneInput.value.trim();
 
   showStatus("Translating selected text...", "loading");
+  hideSources();
 
   try {
     await Word.run(async (context) => {
@@ -458,8 +637,11 @@ async function translateSelectedText(): Promise<void> {
       const translation = await callApolloPrompt(prompt);
 
       // Replace selected text with the translation
-      selection.insertText(translation, Word.InsertLocation.replace);
+      selection.insertText(translation.text, Word.InsertLocation.replace);
       await context.sync();
+
+      // Display sources
+      displaySources(translation.sources);
 
       showStatus("Translation inserted successfully!", "success");
     });

@@ -10,7 +10,8 @@
 //const LOCAL_STORAGE_API_KEY = 'openai_api_key';
 
 //Apollo API config
-const APOLLO_API_URL = "https://olympai-a782bc8ad30b.herokuapp.com";
+// const APOLLO_API_URL = "https://olympai-a782bc8ad30b.herokuapp.com";
+const APOLLO_API_URL = 'https://app.olymp.health'
 const LOCAL_STORAGE_TOKEN_KEY = "apollo_auth_token";
 const LOCAL_STORAGE_USER_EMAIL_KEY = "apollo_user_email";
 

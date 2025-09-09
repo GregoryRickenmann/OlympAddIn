@@ -11,7 +11,7 @@
 
 //Apollo API config
 // const APOLLO_API_URL = "https://olympai-a782bc8ad30b.herokuapp.com";
-const APOLLO_API_URL = 'https://app.olymp.health'
+const APOLLO_API_URL = "https://app.olymp.health";
 const LOCAL_STORAGE_TOKEN_KEY = "apollo_auth_token";
 const LOCAL_STORAGE_USER_EMAIL_KEY = "apollo_user_email";
 
@@ -102,7 +102,7 @@ async function authenticate(): Promise<void> {
       try {
         const errorData = await response.json();
         errorMessage = errorData.error || errorData.message || errorMessage;
-      } catch (e) {
+      } catch {
         // Use default error message if response isn't JSON
       }
       throw new Error(errorMessage);
@@ -218,7 +218,7 @@ export async function generateAndInsertText(): Promise<void> {
     return;
   }
 
-  showStatus("Generating text with AI...", "loading");
+  showStatus("Starting AI text generation...", "loading");
   hideSources();
 
   try {
@@ -279,13 +279,22 @@ export async function generateAndInsertText(): Promise<void> {
 //   return data.choices[0].message.content.trim();
 // }
 
-// Call Apollo API for prompts
-async function callApolloPrompt(prompt: string): Promise<{text: string, sources: any}> {
+// Call Apollo API for prompts using async task structure
+async function callApolloPrompt(prompt: string): Promise<{ text: string; sources: any }> {
   if (!authToken) {
     throw new Error("Authentication required");
   }
 
-  const response = await fetch(APOLLO_API_URL + "/word-addin-api/prompt", {
+  // Step 1: Start the async task
+  const taskId = await startAsyncQuery(prompt);
+
+  // Step 2: Poll for results
+  return await pollTaskStatus(taskId);
+}
+
+// Start an async query and return the task ID
+async function startAsyncQuery(prompt: string): Promise<string> {
+  const response = await fetch(APOLLO_API_URL + "/word-addin-api/prompt/start", {
     method: "POST",
     headers: {
       Authorization: `Bearer ${authToken}`,
@@ -314,7 +323,7 @@ async function callApolloPrompt(prompt: string): Promise<{text: string, sources:
     try {
       const errorData = await response.json();
       errorMessage = errorData.error || errorData.message || errorMessage;
-    } catch (parseError) {
+    } catch {
       // If error response isn't JSON, use the default message
     }
 
@@ -323,16 +332,94 @@ async function callApolloPrompt(prompt: string): Promise<{text: string, sources:
 
   const data = await response.json();
 
-  // Validate response format
-  if (!data.text) {
-    throw new Error("No text field found in API response");
+  if (!data.task_id) {
+    throw new Error("No task ID received from server");
   }
 
-  // Return the complete response with both text and sources
-  return {
-    text: data.text.trim(),
-    sources: data.sources || {}
-  };
+  return data.task_id;
+}
+
+// Poll task status until completion
+async function pollTaskStatus(taskId: string): Promise<{ text: string; sources: any }> {
+  const maxAttempts = 120; // Maximum 2 minutes (120 * 1s)
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    try {
+      const response = await fetch(APOLLO_API_URL + `/word-addin-api/prompt/status/${taskId}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+
+      if (response.status === 401) {
+        throw new Error("Authentication failed. Please log in again.");
+      }
+
+      if (!response.ok) {
+        let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+        } catch {
+          // Use default error message
+        }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+
+      // Handle different task states
+      switch (data.status) {
+        case "success":
+          // Task completed successfully
+          if (!data.result || !data.result.text) {
+            throw new Error("No text field found in API response");
+          }
+          return {
+            text: data.result.text.trim(),
+            sources: data.result.sources || {},
+          };
+
+        case "failure":
+          // Task failed
+          throw new Error(data.error || "Query processing failed");
+
+        case "pending":
+        case "started":
+          // Task still running, update status message
+          if (data.progress) {
+            updateStatusMessage(data.progress);
+          }
+          break;
+
+        default:
+          // Unknown status, continue polling
+          break;
+      }
+
+      // Wait 1 second before next poll
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      attempts++;
+    } catch (error) {
+      // If it's an authentication error, re-throw it
+      if (error.message.includes("401") || error.message.includes("Authentication")) {
+        throw error;
+      }
+      // For other errors, wait and retry
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      attempts++;
+    }
+  }
+
+  // Timeout reached
+  throw new Error("Query processing timeout. Please try again.");
+}
+
+// Update status message during polling
+function updateStatusMessage(progress: string): void {
+  showStatus(progress, "loading");
 }
 
 /**
@@ -400,10 +487,10 @@ function displaySources(sources: any): void {
  */
 function getSourceKeyDisplay(key: string): string {
   const keyMappings: Record<string, string> = {
-    'database': '🗄️ Database',
-    'web_search': '🔍 Web Search',
-    'api_connection': '🔗 API Connection',
-    'files': '📁 Files'
+    database: "🗄️ Database",
+    web_search: "🔍 Web Search",
+    api_connection: "🔗 API Connection",
+    files: "📁 Files",
   };
   return keyMappings[key] || key;
 }
@@ -415,7 +502,7 @@ function createArrayDisplay(array: any[], sourceType: string): HTMLElement {
   const container = document.createElement("div");
   container.className = "source-array";
 
-  array.forEach((item, index) => {
+  array.forEach((item) => {
     const itemElement = document.createElement("div");
     itemElement.className = "source-array-item";
 
@@ -427,11 +514,11 @@ function createArrayDisplay(array: any[], sourceType: string): HTMLElement {
       link.rel = "noopener noreferrer";
       link.className = "source-link";
       link.textContent = item.title;
-      
+
       const urlSpan = document.createElement("span");
       urlSpan.className = "source-url";
       urlSpan.textContent = item.url;
-      
+
       itemElement.appendChild(link);
       itemElement.appendChild(urlSpan);
     } else if (sourceType === "files") {
@@ -465,15 +552,15 @@ function createObjectDisplay(obj: any): HTMLElement {
   for (const [key, value] of Object.entries(obj)) {
     const itemElement = document.createElement("div");
     itemElement.className = "source-object-item";
-    
+
     const keySpan = document.createElement("span");
     keySpan.className = "source-object-key";
     keySpan.textContent = key + ":";
-    
+
     const valueSpan = document.createElement("span");
     valueSpan.className = "source-object-value";
     valueSpan.textContent = String(value);
-    
+
     itemElement.appendChild(keySpan);
     itemElement.appendChild(valueSpan);
     container.appendChild(itemElement);
@@ -486,23 +573,23 @@ function createObjectDisplay(obj: any): HTMLElement {
  * Get appropriate icon for file type
  */
 function getFileIcon(filename: string): string {
-  const extension = filename.split('.').pop()?.toLowerCase() || '';
-  
+  const extension = filename.split(".").pop()?.toLowerCase() || "";
+
   const iconMappings: Record<string, string> = {
-    'pdf': '📄',
-    'doc': '📝',
-    'docx': '📝',
-    'xls': '📊',
-    'xlsx': '📊',
-    'ppt': '📽️',
-    'pptx': '📽️',
-    'txt': '📄',
-    'csv': '📊',
-    'json': '🔧',
-    'xml': '🔧'
+    pdf: "📄",
+    doc: "📝",
+    docx: "📝",
+    xls: "📊",
+    xlsx: "📊",
+    ppt: "📽️",
+    pptx: "📽️",
+    txt: "📄",
+    csv: "📊",
+    json: "🔧",
+    xml: "🔧",
   };
-  
-  return iconMappings[extension] || '📄';
+
+  return iconMappings[extension] || "📄";
 }
 
 /**
@@ -547,8 +634,8 @@ function showStatus(message: string, type: "success" | "error" | "loading"): voi
       break;
   }
 
-  // Auto-hide success and loading messages after 3 seconds
-  if (type === "success" || type === "loading") {
+  // Auto-hide success messages after 3 seconds, loading messages stay visible
+  if (type === "success") {
     setTimeout(() => {
       statusElement.style.display = "none";
     }, 3000);
@@ -562,7 +649,7 @@ async function summarizeSelectedText(): Promise<void> {
     return;
   }
 
-  showStatus("Summarizing selected text...", "loading");
+  showStatus("Starting text summarization...", "loading");
   hideSources();
 
   try {
@@ -616,7 +703,7 @@ async function translateSelectedText(): Promise<void> {
   const targetLanguage = languageSelect.value;
   const tone = toneInput.value.trim();
 
-  showStatus("Translating selected text...", "loading");
+  showStatus("Starting text translation...", "loading");
   hideSources();
 
   try {

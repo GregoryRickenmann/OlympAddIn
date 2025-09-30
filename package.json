@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@types/markdown-it": "^14.1.2",
+    "commonmark": "^0.31.2",
     "core-js": "^3.36.0",
     "markdown-it": "^14.1.0",
     "regenerator-runtime": "^0.14.1"

@@ -15,6 +15,8 @@ const LOCAL_STORAGE_USER_EMAIL_KEY = "apollo_user_email";
 // Authentication state
 let authToken: string | null = null;
 let userEmail: string | null = null;
+let requires2FA: boolean = false;
+let pendingAuthData: { email: string; password: string } | null = null;
 
 Office.onReady((info) => {
   if (info.host === Office.HostType.Word) {
@@ -57,7 +59,16 @@ function initializeAuthState(): void {
 async function authenticate(): Promise<void> {
   const emailInput = document.getElementById("auth-email") as HTMLInputElement;
   const passwordInput = document.getElementById("auth-password") as HTMLInputElement;
+  const totpInput = document.getElementById("auth-totp") as HTMLInputElement;
+  const totpGroup = document.getElementById("totp-group");
 
+  // If 2FA is required and TOTP token is provided, verify 2FA
+  if (requires2FA && totpInput && totpInput.value.trim()) {
+    await verify2FA();
+    return;
+  }
+
+  // Initial login attempt
   if (!emailInput || !emailInput.value.trim()) {
     showStatus("Please enter your email address", "error");
     return;
@@ -107,6 +118,24 @@ async function authenticate(): Promise<void> {
 
     const data = await response.json();
 
+    // Check if 2FA is required
+    if (data.requires_2fa) {
+      requires2FA = true;
+      pendingAuthData = { email, password };
+
+      // Show 2FA input field
+      if (totpGroup) {
+        totpGroup.style.display = "block";
+      }
+      if (totpInput) {
+        totpInput.focus();
+      }
+
+      showStatus("Please enter your 2FA code", "loading");
+      return;
+    }
+
+    // No 2FA required, proceed with login
     if (!data.token) {
       throw new Error("No authentication token received");
     }
@@ -129,10 +158,116 @@ async function authenticate(): Promise<void> {
   }
 }
 
+// Verify 2FA token
+async function verify2FA(): Promise<void> {
+  const totpInput = document.getElementById("auth-totp") as HTMLInputElement;
+  const totpGroup = document.getElementById("totp-group");
+  const passwordInput = document.getElementById("auth-password") as HTMLInputElement;
+
+  if (!totpInput || !totpInput.value.trim()) {
+    showStatus("Please enter your 2FA code", "error");
+    return;
+  }
+
+  if (!pendingAuthData) {
+    showStatus("Authentication session expired. Please log in again.", "error");
+    requires2FA = false;
+    if (totpGroup) {
+      totpGroup.style.display = "none";
+    }
+    return;
+  }
+
+  const totpToken = totpInput.value.trim();
+
+  showStatus("Verifying 2FA code...", "loading");
+
+  try {
+    const response = await fetch(APOLLO_API_URL + "/word-addin-api/auth/verify-2fa", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        email: pendingAuthData.email,
+        password: pendingAuthData.password,
+        totp_token: totpToken,
+      }),
+    });
+
+    if (response.status === 401) {
+      showStatus("Invalid 2FA code", "error");
+      return;
+    }
+
+    if (response.status === 429) {
+      showStatus("Too many attempts. Please try again later", "error");
+      return;
+    }
+
+    if (!response.ok) {
+      let errorMessage = `2FA verification failed (${response.status})`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.error || errorData.message || errorMessage;
+      } catch {
+        // Use default error message if response isn't JSON
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+
+    if (!data.token) {
+      throw new Error("No authentication token received");
+    }
+
+    // Save authentication data
+    authToken = data.token;
+    userEmail = pendingAuthData.email;
+    saveAuthData(data.token, pendingAuthData.email);
+
+    // Update UI to logged-in state
+    showLoggedInState(pendingAuthData.email);
+
+    // Clear fields and reset state
+    if (passwordInput) {
+      passwordInput.value = "";
+    }
+    if (totpInput) {
+      totpInput.value = "";
+    }
+    if (totpGroup) {
+      totpGroup.style.display = "none";
+    }
+
+    requires2FA = false;
+    pendingAuthData = null;
+
+    showStatus("Successfully logged in!", "success");
+  } catch (error) {
+    console.error("2FA verification error:", error);
+    showStatus(error.message || "2FA verification failed", "error");
+  }
+}
+
 // Logout user
 function logout(): void {
   authToken = null;
   userEmail = null;
+  requires2FA = false;
+  pendingAuthData = null;
+
+  // Hide 2FA input field
+  const totpGroup = document.getElementById("totp-group");
+  const totpInput = document.getElementById("auth-totp") as HTMLInputElement;
+  if (totpGroup) {
+    totpGroup.style.display = "none";
+  }
+  if (totpInput) {
+    totpInput.value = "";
+  }
+
   clearAuthData();
   showLoggedOutState();
   showStatus("Logged out successfully", "success");

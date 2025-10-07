@@ -46,6 +46,10 @@
                     <label class="ms-Label input-label">Password</label>
                     <input type="password" id="auth-password" class="ms-TextField-field modern-input" placeholder="Your password">
                 </div>
+                <div id="totp-group" class="input-group" style="display: none;">
+                    <label class="ms-Label input-label">2FA Code</label>
+                    <input type="text" id="auth-totp" class="ms-TextField-field modern-input" placeholder="Enter 6-digit code" maxlength="6">
+                </div>
                 <div class="button-section">
                     <button id="login-button" class="modern-button primary-button">
                         <span class="button-text">Log In</span>
